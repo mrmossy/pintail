@@ -135,6 +135,30 @@ services:
     ports:
       - "5432:5432"
 
+  # ===================
+  # POSTGRES INIT - Ensure Schemas
+  # ===================
+  postgres-init:
+    image: postgres:16-alpine
+    container_name: postgres-init
+    depends_on:
+      - postgres
+    networks:
+      - web
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
+      - PGPASSWORD=${POSTGRES_PASSWORD}
+    entrypoint:
+      - sh
+      - -c
+      - |
+        until pg_isready -h postgres -U "$$POSTGRES_USER"; do sleep 1; done;
+        psql -h postgres -U "$$POSTGRES_USER" -d "$$POSTGRES_DB" -v ON_ERROR_STOP=1 \
+          -c 'CREATE SCHEMA IF NOT EXISTS app;' \
+          -c 'CREATE SCHEMA IF NOT EXISTS n8n;';
+
 networks:
   web:
     driver: bridge
