@@ -41,12 +41,12 @@ services:
     networks:
       - web
     environment:
-      - N8N_HOST=pintail-n8n.nextrhythm.ai
-      - N8N_PORT=5678
-      - N8N_PROTOCOL=https
-      - NODE_ENV=production
-      - WEBHOOK_URL=https://pintail-n8n.nextrhythm.ai/
-      - GENERIC_TIMEZONE=America/Los_Angeles
+      - N8N_HOST=${N8N_HOST}
+      - N8N_PORT=${N8N_PORT}
+      - N8N_PROTOCOL=${N8N_PROTOCOL}
+      - NODE_ENV=${NODE_ENV}
+      - WEBHOOK_URL=${WEBHOOK_URL}
+      - GENERIC_TIMEZONE=${GENERIC_TIMEZONE}
       - N8N_ENCRYPTION_KEY=${N8N_ENCRYPTION_KEY}
       - N8N_BLOCK_ENV_ACCESS_IN_NODE=false
       # Database connection for n8n
@@ -57,7 +57,7 @@ services:
       - DB_POSTGRESDB_SCHEMA=${POSTGRES_N8N_SCHEMA}
       - DB_POSTGRESDB_USER=${POSTGRES_USER}
       - DB_POSTGRESDB_PASSWORD=${POSTGRES_PASSWORD}
-      - DB_POSTGRESDB_SSL_REJECT_UNAUTHORIZED=false
+      - DB_POSTGRESDB_SSL=false
       # RentManager API
       - RENTMANAGER_USERNAME=${RENTMANAGER_USERNAME}
       - RENTMANAGER_PASSWORD=${RENTMANAGER_PASSWORD}
@@ -116,15 +116,30 @@ services:
       - "traefik.http.routers.chat.tls.certresolver=letsencrypt"
       - "traefik.http.services.chat.loadbalancer.server.port=3000"
 
+  # ===================
+  # POSTGRES - Database
+  # ===================
+  postgres:
+    image: postgres:16-alpine
+    container_name: postgres
+    restart: unless-stopped
+    networks:
+      - web
+    environment:
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+    volumes:
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+      - postgres-data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
 networks:
   web:
     driver: bridge
 
 volumes:
   n8n-data:
-    external: true
-    name: pintail_n8n-data
   budibase-data:
-    external: true
-    name: pintail_budibase-data
-
+  postgres-data:

@@ -1,0 +1,12 @@
+services:
+  n8n:
+    ports:
+      - "5678:5678"
+
+  budibase:
+    ports:
+      - "8080:80"
+
+  chat-backend:
+    ports:
+      - "3000:3000"

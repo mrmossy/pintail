@@ -15,13 +15,16 @@ You help tenants with questions about their lease, maintenance requests, rent pa
 and general property information. Be friendly, concise, and professional.`;
 
 // Database connection
+const useSsl =
+  process.env.NODE_ENV === 'production' || process.env.POSTGRES_SSL === 'true';
+
 const pool = new Pool({
   host: process.env.POSTGRES_HOST || 'postgres',
   port: 5432,
   user: process.env.POSTGRES_USER,
   password: process.env.POSTGRES_PASSWORD,
   database: process.env.POSTGRES_DB,
-  ssl: { rejectUnauthorized: false },
+  ssl: useSsl ? { rejectUnauthorized: false } : false,
   options: '-c search_path=app,public',
 });
 
@@ -162,4 +165,3 @@ app.listen(PORT, async () => {
   await initDb();
   console.log(`Pintail chat backend running on port ${PORT}`);
 });
-
