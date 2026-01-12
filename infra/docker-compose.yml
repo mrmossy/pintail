@@ -1,0 +1,130 @@
+services:
+  # ===================
+  # TRAEFIK - Reverse Proxy & SSL
+  # ===================
+  traefik:
+    image: traefik:3.6.1
+    container_name: traefik
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    networks:
+      - web
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ../runtime/traefik-data:/letsencrypt
+    command:
+      - --api.dashboard=false
+      - --log.level=DEBUG
+      - --providers.docker=true
+      - --providers.docker.exposedbydefault=false
+      - --entrypoints.web.address=:80
+      - --entrypoints.websecure.address=:443
+      - --certificatesresolvers.letsencrypt.acme.email=mrmossy@yahoo.com
+      - --certificatesresolvers.letsencrypt.acme.storage=/letsencrypt/acme.json
+      - --certificatesresolvers.letsencrypt.acme.httpchallenge=true
+      - --certificatesresolvers.letsencrypt.acme.httpchallenge.entrypoint=web
+      - --entrypoints.web.http.redirections.entrypoint.to=websecure
+      - --entrypoints.web.http.redirections.entrypoint.scheme=https
+
+  # ===================
+  # N8N - Workflow Automation
+  # ===================
+  n8n:
+    image: n8nio/n8n:latest
+    container_name: n8n
+    restart: unless-stopped
+    networks:
+      - web
+    environment:
+      - N8N_HOST=pintail-n8n.nextrhythm.ai
+      - N8N_PORT=5678
+      - N8N_PROTOCOL=https
+      - NODE_ENV=production
+      - WEBHOOK_URL=https://pintail-n8n.nextrhythm.ai/
+      - GENERIC_TIMEZONE=America/Los_Angeles
+      - N8N_ENCRYPTION_KEY=${N8N_ENCRYPTION_KEY}
+      - N8N_BLOCK_ENV_ACCESS_IN_NODE=false
+      # Database connection for n8n
+      - DB_TYPE=postgresdb
+      - DB_POSTGRESDB_HOST=${POSTGRES_HOST}
+      - DB_POSTGRESDB_PORT=${POSTGRES_PORT}
+      - DB_POSTGRESDB_DATABASE=${POSTGRES_DB}
+      - DB_POSTGRESDB_SCHEMA=${POSTGRES_N8N_SCHEMA}
+      - DB_POSTGRESDB_USER=${POSTGRES_USER}
+      - DB_POSTGRESDB_PASSWORD=${POSTGRES_PASSWORD}
+      - DB_POSTGRESDB_SSL_REJECT_UNAUTHORIZED=false
+      # RentManager API
+      - RENTMANAGER_USERNAME=${RENTMANAGER_USERNAME}
+      - RENTMANAGER_PASSWORD=${RENTMANAGER_PASSWORD}
+    volumes:
+      - n8n-data:/home/node/.n8n
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.n8n.rule=Host(`pintail-n8n.nextrhythm.ai`)"
+      - "traefik.http.routers.n8n.entrypoints=websecure"
+      - "traefik.http.routers.n8n.tls.certresolver=letsencrypt"
+      - "traefik.http.services.n8n.loadbalancer.server.port=5678"
+
+  # ===================
+  # BUDIBASE - Dashboard/Admin UI
+  # ===================
+  budibase:
+    image: budibase/budibase:latest
+    container_name: budibase
+    restart: unless-stopped
+    networks:
+      - web
+    environment:
+      - BB_ADMIN_USER_EMAIL=${BB_ADMIN_USER_EMAIL}
+      - BB_ADMIN_USER_PASSWORD=${BB_ADMIN_USER_PASSWORD}
+    volumes:
+      - budibase-data:/data
+    healthcheck:
+      disable: true
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.budibase.rule=Host(`pintail-dashboard.nextrhythm.ai`)"
+      - "traefik.http.routers.budibase.entrypoints=websecure"
+      - "traefik.http.routers.budibase.tls.certresolver=letsencrypt"
+      - "traefik.http.services.budibase.loadbalancer.server.port=80"
+
+  # ===================
+  # CHAT BACKEND - Express.js API
+  # ===================
+  chat-backend:
+    build: ../apps/chat-backend
+    container_name: chat-backend
+    restart: unless-stopped
+    networks:
+      - web
+    environment:
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - POSTGRES_HOST=${POSTGRES_HOST}
+      - POSTGRES_PORT=${POSTGRES_PORT}
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.chat.rule=Host(`pintail-chat.nextrhythm.ai`)"
+      - "traefik.http.routers.chat.entrypoints=websecure"
+      - "traefik.http.routers.chat.tls.certresolver=letsencrypt"
+      - "traefik.http.services.chat.loadbalancer.server.port=3000"
+
+networks:
+  web:
+    driver: bridge
+
+volumes:
+  n8n-data:
+    external: true
+    name: pintail_n8n-data
+  budibase-data:
+    external: true
+    name: pintail_budibase-data
+
