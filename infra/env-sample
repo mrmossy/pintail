@@ -18,7 +18,6 @@ N8N_HOSTNAME=pintail-n8n.dev.nextrhythm.ai
 N8N_PORT=5678
 N8N_PROTOCOL=http
 N8N_ENCRYPTION_KEY=your_n8n_encryption_key_here
-NODE_ENV=development
 WEBHOOK_URL=http://pintail-n8n.dev.nextrhythm.ai
 
 # N8N Database configuration
@@ -31,6 +30,7 @@ DB_POSTGRESDB_SSL_ENABLED=false # set to true for production with SSL
 
 # Chat backend configuration
 CHAT_BACKEND_HOSTNAME=pintail-chat.dev.nextrhythm.ai
+NODE_ENV=development
 
 # OpenAI 
 OPENAI_API_KEY=your_openai_api_key_here
