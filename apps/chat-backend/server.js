@@ -25,7 +25,6 @@ const pool = new Pool({
   password: process.env.POSTGRES_PASSWORD,
   database: process.env.POSTGRES_DB,
   ssl: useSsl ? { rejectUnauthorized: false } : false,
-  options: '-c search_path=app,public',
 });
 
 // Health check endpoint
