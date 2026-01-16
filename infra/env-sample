@@ -1,0 +1,46 @@
+# General configuration
+COMPOSE_PROJECT_NAME=pintail
+TIMEZONE=America/Los_Angeles
+
+# PostgreSQL superuser password
+POSTGRES_USER=postgres
+POSTGRES_PASSWORD=postgres
+
+# Application database configuration
+POSTGRES_APP_HOST=postgres
+POSTGRES_APP_PORT=5432
+POSTGRES_APP_DB=pintail-app
+POSTGRES_APP_USER=app_user
+POSTGRES_APP_PASSWORD=app_password
+
+# N8N configuration
+N8N_HOSTNAME=pintail-n8n.dev.nextrhythm.ai
+N8N_PORT=5678
+N8N_PROTOCOL=http
+N8N_ENCRYPTION_KEY=your_n8n_encryption_key_here
+NODE_ENV=development
+WEBHOOK_URL=http://pintail-n8n.dev.nextrhythm.ai
+
+# N8N Database configuration
+POSTGRES_N8N_HOST=postgres
+POSTGRES_N8N_PORT=5432
+POSTGRES_N8N_DB=pintail-n8n
+POSTGRES_N8N_USER=n8n_user
+POSTGRES_N8N_PASSWORD=n8n_password
+DB_POSTGRESDB_SSL_ENABLED=false # set to true for production with SSL
+
+# Chat backend configuration
+CHAT_BACKEND_HOSTNAME=pintail-chat.dev.nextrhythm.ai
+
+# OpenAI 
+OPENAI_API_KEY=your_openai_api_key_here
+
+# Budibase Configuration
+BUDIBASE_HOSTNAME=pintail-dashboard.dev.nextrhythm.ai
+BB_ADMIN_USER_EMAIL=
+BB_ADMIN_USER_PASSWORD=
+
+# RentManager Configuration
+RENTMANAGER_USERNAME=nextrhythm
+RENTMANAGER_PASSWORD=your_rentmanager_password_here
+
