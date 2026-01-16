@@ -4,7 +4,6 @@ services:
   # ===================
   traefik:
     image: traefik:3.6.1
-    container_name: traefik
     restart: unless-stopped
     security_opt:
       - no-new-privileges:true
@@ -36,28 +35,26 @@ services:
   # ===================
   n8n:
     image: n8nio/n8n:latest
-    container_name: n8n
     restart: unless-stopped
     networks:
       - web
     environment:
-      - N8N_HOST=${N8N_HOST}
+      - N8N_HOST=${N8N_HOSTNAME}
       - N8N_PORT=${N8N_PORT}
       - N8N_PROTOCOL=${N8N_PROTOCOL}
       - NODE_ENV=${NODE_ENV}
       - WEBHOOK_URL=${WEBHOOK_URL}
-      - GENERIC_TIMEZONE=${GENERIC_TIMEZONE}
+      - GENERIC_TIMEZONE=${TIMEZONE}
       - N8N_ENCRYPTION_KEY=${N8N_ENCRYPTION_KEY}
       - N8N_BLOCK_ENV_ACCESS_IN_NODE=false
       # Database connection for n8n
       - DB_TYPE=postgresdb
-      - DB_POSTGRESDB_HOST=${POSTGRES_HOST}
-      - DB_POSTGRESDB_PORT=${POSTGRES_PORT}
-      - DB_POSTGRESDB_DATABASE=${POSTGRES_DB}
-      - DB_POSTGRESDB_SCHEMA=${POSTGRES_N8N_SCHEMA}
-      - DB_POSTGRESDB_USER=${POSTGRES_USER}
-      - DB_POSTGRESDB_PASSWORD=${POSTGRES_PASSWORD}
-      - DB_POSTGRESDB_SSL=false
+      - DB_POSTGRESDB_HOST=${POSTGRES_N8N_HOST}
+      - DB_POSTGRESDB_PORT=${POSTGRES_N8N_PORT}
+      - DB_POSTGRESDB_DATABASE=${POSTGRES_N8N_DB}
+      - DB_POSTGRESDB_USER=${POSTGRES_N8N_USER}
+      - DB_POSTGRESDB_PASSWORD=${POSTGRES_N8N_PASSWORD}
+      - DB_POSTGRESDB_SSL_ENABLED=${DB_POSTGRESDB_SSL_ENABLED}
       # RentManager API
       - RENTMANAGER_USERNAME=${RENTMANAGER_USERNAME}
       - RENTMANAGER_PASSWORD=${RENTMANAGER_PASSWORD}
@@ -65,7 +62,7 @@ services:
       - n8n-data:/home/node/.n8n
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.n8n.rule=Host(`pintail-n8n.nextrhythm.ai`)"
+      - "traefik.http.routers.n8n.rule=Host(`${N8N_HOSTNAME}`)"
       - "traefik.http.routers.n8n.entrypoints=websecure"
       - "traefik.http.routers.n8n.tls.certresolver=letsencrypt"
       - "traefik.http.services.n8n.loadbalancer.server.port=5678"
@@ -75,7 +72,6 @@ services:
   # ===================
   budibase:
     image: budibase/budibase:latest
-    container_name: budibase
     restart: unless-stopped
     networks:
       - web
@@ -88,7 +84,7 @@ services:
       disable: true
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.budibase.rule=Host(`pintail-dashboard.nextrhythm.ai`)"
+      - "traefik.http.routers.budibase.rule=Host(`${BUDIBASE_HOSTNAME}`)"
       - "traefik.http.routers.budibase.entrypoints=websecure"
       - "traefik.http.routers.budibase.tls.certresolver=letsencrypt"
       - "traefik.http.services.budibase.loadbalancer.server.port=80"
@@ -98,66 +94,23 @@ services:
   # ===================
   chat-backend:
     build: ../apps/chat-backend
-    container_name: chat-backend
     restart: unless-stopped
     networks:
       - web
     environment:
       - OPENAI_API_KEY=${OPENAI_API_KEY}
-      - POSTGRES_HOST=${POSTGRES_HOST}
-      - POSTGRES_PORT=${POSTGRES_PORT}
-      - POSTGRES_DB=${POSTGRES_DB}
-      - POSTGRES_USER=${POSTGRES_USER}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      # Database connection for chat backend
+      - POSTGRES_HOST=${POSTGRES_APP_HOST}
+      - POSTGRES_PORT=${POSTGRES_APP_PORT}
+      - POSTGRES_DB=${POSTGRES_APP_DB}
+      - POSTGRES_USER=${POSTGRES_APP_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_APP_PASSWORD}
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.chat.rule=Host(`pintail-chat.nextrhythm.ai`)"
+      - "traefik.http.routers.chat.rule=Host(`${CHAT_BACKEND_HOSTNAME}`)"
       - "traefik.http.routers.chat.entrypoints=websecure"
       - "traefik.http.routers.chat.tls.certresolver=letsencrypt"
       - "traefik.http.services.chat.loadbalancer.server.port=3000"
-
-  # ===================
-  # POSTGRES - Database
-  # ===================
-  postgres:
-    image: postgres:16-alpine
-    container_name: postgres
-    restart: unless-stopped
-    networks:
-      - web
-    environment:
-      - POSTGRES_DB=${POSTGRES_DB}
-      - POSTGRES_USER=${POSTGRES_USER}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
-    volumes:
-      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
-      - postgres-data:/var/lib/postgresql/data
-    ports:
-      - "5432:5432"
-
-  # ===================
-  # POSTGRES INIT - Ensure Schemas
-  # ===================
-  postgres-init:
-    image: postgres:16-alpine
-    container_name: postgres-init
-    depends_on:
-      - postgres
-    networks:
-      - web
-    environment:
-      - POSTGRES_USER=${POSTGRES_USER}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
-      - POSTGRES_DB=${POSTGRES_DB}
-      - PGPASSWORD=${POSTGRES_PASSWORD}
-    entrypoint:
-      - sh
-      - -c
-      - |
-        until pg_isready -h postgres -U "$$POSTGRES_USER"; do sleep 1; done;
-        psql -h postgres -U "$$POSTGRES_USER" -d "$$POSTGRES_DB" -v ON_ERROR_STOP=1 \
-          -c 'CREATE SCHEMA IF NOT EXISTS app;' \
-          -c 'CREATE SCHEMA IF NOT EXISTS n8n;';
 
 networks:
   web:
@@ -166,4 +119,3 @@ networks:
 volumes:
   n8n-data:
   budibase-data:
-  postgres-data:

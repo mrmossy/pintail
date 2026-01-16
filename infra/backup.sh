@@ -7,7 +7,7 @@ DATE=$(date +%Y-%m-%d_%H-%M-%S)
 RETENTION_DAYS=7
 
 # Load environment variables
-source /home/ubuntu/pintail/apps/.env
+source /home/ubuntu/pintail/.env
 
 echo "Starting backup: $DATE"
 
