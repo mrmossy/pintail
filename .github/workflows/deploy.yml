@@ -1,38 +1,45 @@
-name: Deploy chat-backend to Lightsail
+name: Deploy to Lightsail
 
 on:
   push:
-    branches: [ "main" ]
+    branches:
+      - main
+
+concurrency:
+  group: deploy-main
+  cancel-in-progress: true
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout (not strictly required, but fine)
+      - name: Checkout (for metadata only)
         uses: actions/checkout@v4
 
-      - name: Start SSH agent
-        uses: webfactory/ssh-agent@v0.9.0
+      - name: Deploy over SSH
+        uses: appleboy/ssh-action@v1.0.3
         with:
-          ssh-private-key: ${{ secrets.LIGHTSAIL_SSH_KEY }}
-
-      - name: Add Lightsail host key
-        run: |
-          mkdir -p ~/.ssh
-          ssh-keyscan -H "${{ secrets.LIGHTSAIL_HOST }}" >> ~/.ssh/known_hosts
-
-      - name: Deploy (git pull + docker rebuild + restart)
-        run: |
-          ssh "${{ secrets.LIGHTSAIL_USER }}@${{ secrets.LIGHTSAIL_HOST }}" << 'EOF'
+          host: ${{ secrets.LIGHTSAIL_HOST }}
+          username: ${{ secrets.LIGHTSAIL_SSH_USER }}
+          port: ${{ secrets.LIGHTSAIL_SSH_PORT }}
+          key: ${{ secrets.LIGHTSAIL_SSH_PRIVATE_KEY }}
+          script: |
             set -euo pipefail
 
             cd /home/ubuntu/pintail
-            git fetch --all
+
+            echo "Pull latest main..."
+            git fetch origin main
             git reset --hard origin/main
 
             cd /home/ubuntu/pintail/apps
             docker compose build chat-backend
             docker compose up -d --force-recreate chat-backend
 
-            docker compose ps
-          EOF
+            cd /home/ubuntu/pintail/infra
+            echo "Build and restart containers..."
+            docker compose -f docker-compose.yml up -d --build
+
+            echo "Show running services..."
+            docker compose -f docker-compose.yml ps
