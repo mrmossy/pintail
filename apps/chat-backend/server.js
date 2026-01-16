@@ -18,6 +18,13 @@ and general property information. Be friendly, concise, and professional.`;
 const useSsl =
   process.env.NODE_ENV === 'production' || process.env.POSTGRES_SSL === 'true';
 
+console.log('DEBUG: NODE_ENV =', process.env.NODE_ENV);
+console.log('DEBUG: POSTGRES_HOST =', process.env.POSTGRES_HOST);
+console.log('DEBUG: POSTGRES_DB =', process.env.POSTGRES_DB);
+console.log('DEBUG: POSTGRES_USER =', process.env.POSTGRES_USER);
+console.log('DEBUG: useSsl =', useSsl);
+console.log('DEBUG: ssl config =', useSsl ? { rejectUnauthorized: false, require: true } : false);
+
 const pool = new Pool({
   host: process.env.POSTGRES_HOST || 'postgres',
   port: 5432,
