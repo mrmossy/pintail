@@ -33,7 +33,7 @@ app.get('/health', async (req, res) => {
     await pool.query('SELECT 1');
     res.json({ status: 'ok!', service: 'pintail-chat', database: 'connected' });
   } catch (error) {
-    res.status(500).json({ status: 'ERROR!', database: 'disconnected' });
+    res.status(500).json({ status: 'ERROR!', database: 'cannot connect to db' });
   }
 });
 
