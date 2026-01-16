@@ -33,10 +33,6 @@ jobs:
             git fetch origin main
             git reset --hard origin/main
 
-            cd /home/ubuntu/pintail/apps
-            docker compose build chat-backend
-            docker compose up -d --force-recreate chat-backend
-
             cd /home/ubuntu/pintail/infra
             echo "Build and restart containers..."
             docker compose -f docker-compose.yml up -d --build

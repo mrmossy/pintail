@@ -94,7 +94,10 @@ services:
   # CHAT BACKEND - Express.js API
   # ===================
   chat-backend:
-    build: ../apps/chat-backend
+    build: 
+      context: ../apps/chat-backend
+      dockerfile: Dockerfile
+    pull_policy: always
     restart: unless-stopped
     networks:
       - web
