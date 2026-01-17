@@ -6,7 +6,12 @@ const { openai } = require('@ai-sdk/openai');
 const { Pool } = require('pg');
 
 const app = express();
-app.use(cors());
+app.use(cors({
+  origin: '*',
+  methods: ['GET', 'POST', 'OPTIONS'],
+  allowedHeaders: ['Content-Type'],
+  credentials: false
+}));
 app.use(express.json());
 
 // Load configuration from external config file
@@ -91,10 +96,12 @@ app.post('/chat', async (req, res) => {
     return res.status(400).json({ error: 'Message is required' });
   }
 
-  // Set SSE headers
-  res.setHeader('Content-Type', 'text/event-stream');
+  // Set SSE headers with CORS
+  res.setHeader('Content-Type', 'text/event-stream; charset=utf-8');
   res.setHeader('Cache-Control', 'no-cache');
   res.setHeader('Connection', 'keep-alive');
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('X-Accel-Buffering', 'no');
 
   try {
     // Send thinking indicator
