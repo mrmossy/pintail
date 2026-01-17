@@ -1,5 +1,6 @@
 const express = require('express');
 const cors = require('cors');
+const fs = require('fs');
 const { streamText } = require('ai');
 const { openai } = require('@ai-sdk/openai');
 const { Pool } = require('pg');
@@ -8,11 +9,26 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Configuration
-const MAX_HISTORY_MESSAGES = 20;  // Limit context size
-const SYSTEM_PROMPT = `You are a helpful assistant for Pintail Property Management.
-You help tenants with questions about their lease, maintenance requests, rent payments,
-and general property information. Be friendly, concise, and professional.`;
+// Load configuration from external config file
+function loadConfig() {
+  try {
+    const configPath = process.env.CONFIG_PATH || '/app/config/config.json';
+    const configData = fs.readFileSync(configPath, 'utf-8');
+    return JSON.parse(configData);
+  } catch (error) {
+    console.error('Failed to load config:', error.message);
+    // Fallback configuration
+    return {
+      systemPrompt: 'You are a helpful assistant.',
+      aiModel: 'gpt-4o-mini',
+      maxHistoryMessages: 20
+    };
+  }
+}
+
+function getConfig() {
+  return loadConfig();
+}
 
 // Database connection
 const useSsl =
@@ -42,13 +58,14 @@ async function getConversationHistory(sessionId) {
   if (!sessionId) return [];
 
   try {
+    const config = getConfig();
     const result = await pool.query(
       `SELECT user_message, assistant_response
        FROM conversations
        WHERE session_id = $1
        ORDER BY created_at DESC
        LIMIT $2`,
-      [sessionId, MAX_HISTORY_MESSAGES]
+      [sessionId, config.maxHistoryMessages]
     );
 
     // Reverse to get chronological order, then flatten to messages array
@@ -82,16 +99,19 @@ app.post('/chat', async (req, res) => {
     // Send thinking indicator
     res.write(`data: ${JSON.stringify({ status: 'thinking' })}\n\n`);
 
+    // Load config for this request
+    const config = getConfig();
+
     // Build messages array with history
     const history = await getConversationHistory(sessionId);
     const messages = [
-      { role: 'system', content: SYSTEM_PROMPT },
+      { role: 'system', content: config.systemPrompt },
       ...history,
       { role: 'user', content: message }
     ];
 
     const result = await streamText({
-      model: openai('gpt-4o-mini'),
+      model: openai(config.aiModel),
       messages: messages,
     });
 

@@ -110,6 +110,8 @@ services:
       - POSTGRES_DB=${POSTGRES_APP_DB}
       - POSTGRES_USER=${POSTGRES_APP_USER}
       - POSTGRES_PASSWORD=${POSTGRES_APP_PASSWORD}
+    volumes:
+      - ../apps/chat-backend/config:/app/config:ro
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.chat.rule=Host(`${CHAT_BACKEND_HOSTNAME}`)"
