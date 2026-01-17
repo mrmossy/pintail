@@ -1,0 +1,375 @@
+<!-- Pintail Chat Widget Embed -->
+<style>
+  @import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600&display=swap");
+
+  :root {
+    --pintail-ink: #101816;
+    --pintail-mint: #cfe9d9;
+    --pintail-forest: #0c3b2e;
+    --pintail-gold: #c8a45b;
+    --pintail-sand: #f5f0e6;
+    --pintail-shadow: rgba(12, 59, 46, 0.18);
+  }
+
+  #pintail-chat-widget {
+    font-family: "Space Grotesk", "Trebuchet MS", sans-serif;
+  }
+
+  .pintail-launcher {
+    position: fixed;
+    right: 24px;
+    bottom: 24px;
+    border: none;
+    background: linear-gradient(135deg, var(--pintail-forest), #145d48);
+    color: #fff;
+    padding: 14px 18px;
+    border-radius: 999px;
+    cursor: pointer;
+    box-shadow: 0 16px 32px var(--pintail-shadow);
+    font-size: 14px;
+    letter-spacing: 0.4px;
+  }
+
+  .pintail-panel {
+    position: fixed;
+    right: 24px;
+    bottom: 86px;
+    width: min(360px, calc(100vw - 48px));
+    height: 520px;
+    background: var(--pintail-sand);
+    border-radius: 18px;
+    box-shadow: 0 24px 60px rgba(12, 59, 46, 0.22);
+    display: none;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .pintail-panel.is-open {
+    display: flex;
+    animation: pintail-rise 220ms ease-out;
+  }
+
+  @keyframes pintail-rise {
+    from {
+      transform: translateY(12px);
+      opacity: 0.6;
+    }
+    to {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  }
+
+  .pintail-header {
+    background: linear-gradient(135deg, #0c3b2e, #1d5c48);
+    color: #fff;
+    padding: 18px 20px 14px;
+  }
+
+  .pintail-title {
+    font-size: 16px;
+    font-weight: 600;
+    margin: 0 0 2px;
+  }
+
+  .pintail-subtitle {
+    font-size: 12px;
+    margin: 0;
+    opacity: 0.8;
+  }
+
+  .pintail-messages {
+    flex: 1;
+    padding: 16px;
+    overflow-y: auto;
+    background: radial-gradient(circle at top, #ffffff 0%, #f5f0e6 70%);
+  }
+
+  .pintail-message {
+    display: flex;
+    margin-bottom: 12px;
+  }
+
+  .pintail-message.pintail-user {
+    justify-content: flex-end;
+  }
+
+  .pintail-bubble {
+    max-width: 75%;
+    padding: 10px 12px;
+    border-radius: 14px;
+    font-size: 13px;
+    line-height: 1.4;
+    white-space: pre-wrap;
+  }
+
+  .pintail-user .pintail-bubble {
+    background: var(--pintail-forest);
+    color: #fff;
+    border-bottom-right-radius: 4px;
+  }
+
+  .pintail-assistant .pintail-bubble {
+    background: var(--pintail-mint);
+    color: var(--pintail-ink);
+    border-bottom-left-radius: 4px;
+  }
+
+  .pintail-input-area {
+    padding: 12px 14px 16px;
+    background: #fff;
+    border-top: 1px solid rgba(12, 59, 46, 0.1);
+  }
+
+  .pintail-form {
+    display: flex;
+    gap: 8px;
+  }
+
+  .pintail-input {
+    flex: 1;
+    border: 1px solid rgba(12, 59, 46, 0.2);
+    border-radius: 12px;
+    padding: 10px 12px;
+    font-size: 13px;
+    outline: none;
+  }
+
+  .pintail-send {
+    border: none;
+    background: var(--pintail-gold);
+    color: #1b160c;
+    padding: 0 16px;
+    border-radius: 12px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  .pintail-send:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  @media (max-width: 600px) {
+    .pintail-panel {
+      right: 12px;
+      left: 12px;
+      width: auto;
+      bottom: 80px;
+    }
+
+    .pintail-launcher {
+      right: 12px;
+      bottom: 16px;
+    }
+  }
+</style>
+
+<div
+  id="pintail-chat-widget"
+  data-api-base="https://pintail-chat.nextrhythm.ai"
+  data-title="Pintail Assistant"
+  data-subtitle="Ask a property question or start a request."
+  data-welcome="Hi there. How can we help today?"
+></div>
+
+<script>
+  (() => {
+    const root = document.getElementById("pintail-chat-widget");
+    if (!root) return;
+
+    const apiBase = (root.dataset.apiBase || "").replace(/\/$/, "");
+    const title = root.dataset.title || "Chat Assistant";
+    const subtitle = root.dataset.subtitle || "Online";
+    const welcome = root.dataset.welcome || "";
+
+    const panel = document.createElement("section");
+    panel.className = "pintail-panel";
+
+    const header = document.createElement("header");
+    header.className = "pintail-header";
+    header.innerHTML = `
+      <h3 class="pintail-title">${title}</h3>
+      <p class="pintail-subtitle">${subtitle}</p>
+    `;
+
+    const messages = document.createElement("div");
+    messages.className = "pintail-messages";
+
+    const inputArea = document.createElement("div");
+    inputArea.className = "pintail-input-area";
+    inputArea.innerHTML = `
+      <form class="pintail-form">
+        <input class="pintail-input" type="text" placeholder="Type your message..." />
+        <button class="pintail-send" type="submit">Send</button>
+      </form>
+    `;
+
+    panel.appendChild(header);
+    panel.appendChild(messages);
+    panel.appendChild(inputArea);
+    root.appendChild(panel);
+
+    const launcher = document.createElement("button");
+    launcher.className = "pintail-launcher";
+    launcher.type = "button";
+    launcher.textContent = "Chat with Pintail";
+    root.appendChild(launcher);
+
+    const form = inputArea.querySelector(".pintail-form");
+    const input = inputArea.querySelector(".pintail-input");
+    const sendButton = inputArea.querySelector(".pintail-send");
+
+    const sessionKey = `pintailChatSessionId:${apiBase}`;
+    let sessionId = window.localStorage.getItem(sessionKey);
+    let hasLoadedHistory = false;
+    let isStreaming = false;
+
+    function scrollToBottom() {
+      messages.scrollTop = messages.scrollHeight;
+    }
+
+    function createMessage(role, text) {
+      const message = document.createElement("div");
+      message.className = `pintail-message pintail-${role}`;
+      const bubble = document.createElement("div");
+      bubble.className = "pintail-bubble";
+      bubble.textContent = text;
+      message.appendChild(bubble);
+      messages.appendChild(message);
+      scrollToBottom();
+      return bubble;
+    }
+
+    async function ensureSession() {
+      if (sessionId) return sessionId;
+      const response = await fetch(`${apiBase}/session`, { method: "POST" });
+      if (!response.ok) {
+        throw new Error("Failed to start session");
+      }
+      const data = await response.json();
+      sessionId = data.sessionId;
+      window.localStorage.setItem(sessionKey, sessionId);
+      return sessionId;
+    }
+
+    async function loadHistory() {
+      if (!sessionId || hasLoadedHistory) return;
+      try {
+        const response = await fetch(`${apiBase}/history/${sessionId}`);
+        if (!response.ok) return;
+        const data = await response.json();
+        if (Array.isArray(data.messages)) {
+          data.messages.forEach((item) => {
+            if (item.role === "user" || item.role === "assistant") {
+              createMessage(item.role, item.content);
+            }
+          });
+        }
+      } catch (error) {
+        console.warn("Unable to load chat history", error);
+      } finally {
+        hasLoadedHistory = true;
+      }
+    }
+
+    function togglePanel() {
+      panel.classList.toggle("is-open");
+      if (panel.classList.contains("is-open")) {
+        input.focus();
+        ensureSession()
+          .then(loadHistory)
+          .then(() => {
+            if (!messages.childElementCount && welcome) {
+              createMessage("assistant", welcome);
+            }
+          })
+          .catch((error) => {
+            createMessage("assistant", "Unable to start chat right now.");
+            console.error(error);
+          });
+      }
+    }
+
+    launcher.addEventListener("click", togglePanel);
+
+    async function streamChat(text) {
+      if (!text.trim()) return;
+      createMessage("user", text.trim());
+      input.value = "";
+
+      const assistantBubble = createMessage("assistant", "Thinking...");
+      let assistantText = "";
+
+      sendButton.disabled = true;
+      input.disabled = true;
+      isStreaming = true;
+
+      try {
+        const activeSessionId = await ensureSession();
+        const response = await fetch(`${apiBase}/chat`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ message: text, sessionId: activeSessionId }),
+        });
+
+        if (!response.ok || !response.body) {
+          throw new Error("Chat request failed");
+        }
+
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder("utf-8");
+        let buffer = "";
+
+        while (true) {
+          const { value, done } = await reader.read();
+          if (done) break;
+          buffer += decoder.decode(value, { stream: true });
+          const parts = buffer.split("\n\n");
+          buffer = parts.pop() || "";
+
+          parts.forEach((part) => {
+            const line = part
+              .split("\n")
+              .find((entry) => entry.startsWith("data:"));
+            if (!line) return;
+            const payload = line.replace("data:", "").trim();
+            if (!payload) return;
+            if (payload === "[DONE]") return;
+            try {
+              const data = JSON.parse(payload);
+              if (data.status === "thinking") {
+                assistantBubble.textContent = "Thinking...";
+                return;
+              }
+              if (typeof data.text === "string") {
+                assistantText += data.text;
+                assistantBubble.textContent = assistantText;
+                scrollToBottom();
+              }
+            } catch (error) {
+              console.warn("Malformed stream chunk", error);
+            }
+          });
+        }
+      } catch (error) {
+        assistantBubble.textContent =
+          "Sorry, something went wrong. Please try again.";
+        console.error(error);
+      } finally {
+        sendButton.disabled = false;
+        input.disabled = false;
+        input.focus();
+        isStreaming = false;
+      }
+    }
+
+    form.addEventListener("submit", (event) => {
+      event.preventDefault();
+      if (isStreaming) return;
+      streamChat(input.value);
+    });
+  })();
+</script>
+<!-- End Pintail Chat Widget Embed -->
