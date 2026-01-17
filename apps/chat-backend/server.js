@@ -84,7 +84,8 @@ async function getConversationHistory(sessionId) {
 
 // Chat endpoint with SSE streaming
 app.post('/chat', async (req, res) => {
-  const { message, sessionId } = req.body;
+  const message = req.body.message || req.body.text || req.body.input;
+  const { sessionId } = req.body;
 
   if (!message) {
     return res.status(400).json({ error: 'Message is required' });
