@@ -1,0 +1,99 @@
+{
+  "name": "01-get-open-service-manager-issues",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "b221a315-de83-4b26-833e-0a66a61a0c0e",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "{\n  \"method\": \"GET\",\n  \"resource\": \"ServiceManagerIssues\",\n  \"parameters\": {\n      \"filters\": \"IsClosed,eq,false\",\n      \"fields\": \"Title,Description\"\n  }\n}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        208,
+        0
+      ],
+      "id": "8ddc7e8c-8896-4561-bf48-b3e339d10ab5",
+      "name": "Set Fields"
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "vv16lOoAb878BoKJeM4il",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/vv16lOoAb878BoKJeM4il",
+          "cachedResultName": "rentmanager-api-request"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {
+          "waitForSubWorkflow": true
+        }
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.3,
+      "position": [
+        432,
+        0
+      ],
+      "id": "6556108c-6f7f-4727-b908-46db13bd80eb",
+      "name": "Call 'rentmanager-api-request'"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Set Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Fields": {
+      "main": [
+        [
+          {
+            "node": "Call 'rentmanager-api-request'",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": false,
+    "timeSavedMode": "fixed",
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "versionId": "8984a665-a398-40a6-a25c-4d26714be114",
+  "meta": {
+    "instanceId": "a2d4123e10168ab72545181a6d5bb7e6a5222eb129a2ccd8b6d2ec49af3481af"
+  },
+  "id": "d35ElmKL1CK8FgudE5NYo",
+  "tags": []
+}

@@ -1,0 +1,455 @@
+{
+  "name": "99.01-rent-manager-api-request",
+  "nodes": [
+    {
+      "parameters": {
+        "url": "=https://pintail.api.rentmanager.com/{{$node[\"Edit Fields\"].json[\"resource\"]}}",
+        "sendQuery": true,
+        "specifyQuery": "json",
+        "jsonQuery": "={{$node[\"Edit Fields\"].json[\"parameters\"]}}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Accept",
+              "value": "application/json"
+            },
+            {
+              "name": "X-RM12Api-ApiToken",
+              "value": "={{ $json.access_token }}"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        32,
+        160
+      ],
+      "id": "f4d91c46-09aa-4ca0-90f3-807bc463ce26",
+      "name": "HTTP Request",
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "-- 1. Create table\nCREATE TABLE IF NOT EXISTS tokens (\n    id SERIAL PRIMARY KEY,\n    service VARCHAR(100) UNIQUE NOT NULL,\n    access_token TEXT,\n    refresh_token TEXT,\n    expires_at TIMESTAMPTZ,\n    updated_at TIMESTAMPTZ DEFAULT NOW()\n);\n\n-- 2. Create or replace trigger function\nCREATE OR REPLACE FUNCTION set_updated_at()\nRETURNS TRIGGER AS $$\nBEGIN\n  NEW.updated_at = NOW();\n  RETURN NEW;\nEND;\n$$ LANGUAGE plpgsql;\n\n-- 3. Create trigger only if it doesn't already exist\nDO $$\nBEGIN\n  IF NOT EXISTS (\n    SELECT 1\n    FROM pg_trigger\n    WHERE tgname = 'trigger_set_updated_at'\n  ) THEN\n    CREATE TRIGGER trigger_set_updated_at\n    BEFORE UPDATE ON tokens\n    FOR EACH ROW\n    EXECUTE FUNCTION set_updated_at();\n  END IF;\nEND;\n$$;",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -416,
+        240
+      ],
+      "id": "02f5d273-1b36-4ded-8af0-31a26fd34846",
+      "name": "Create Token Table",
+      "credentials": {
+        "postgres": {
+          "id": "i5abTWEaqeIGsYSi",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "select",
+        "schema": {
+          "__rl": true,
+          "value": "public",
+          "mode": "list",
+          "cachedResultName": "public"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tokens",
+          "mode": "list"
+        },
+        "limit": 1,
+        "where": {
+          "values": [
+            {
+              "column": "service",
+              "value": "rentmanager"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -192,
+        240
+      ],
+      "id": "3eaced1d-728a-4a23-af58-693ef27dfa96",
+      "name": "Get RentManager API Token",
+      "alwaysOutputData": true,
+      "credentials": {
+        "postgres": {
+          "id": "i5abTWEaqeIGsYSi",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "version": 3,
+            "leftValue": "",
+            "caseSensitive": true,
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "e0fa3738-5a4e-4619-ab63-ddb47ce793e3",
+              "leftValue": "={{ $json.error.message }}",
+              "rightValue": "401",
+              "operator": {
+                "type": "string",
+                "operation": "startsWith"
+              }
+            }
+          ],
+          "combinator": "or"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        256,
+        160
+      ],
+      "id": "45625f59-f7e5-42bf-a30b-0032e4b5952b",
+      "name": "Token Expired?"
+    },
+    {
+      "parameters": {
+        "operation": "upsert",
+        "schema": {
+          "__rl": true,
+          "value": "public",
+          "mode": "list",
+          "cachedResultName": "public"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tokens",
+          "mode": "list",
+          "cachedResultName": "tokens"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "service": "rentmanager",
+            "access_token": "={{ $json.data }}"
+          },
+          "matchingColumns": [
+            "service"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "service",
+              "displayName": "service",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "access_token",
+              "displayName": "access_token",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "refresh_token",
+              "displayName": "refresh_token",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false,
+              "removed": true
+            },
+            {
+              "id": "expires_at",
+              "displayName": "expires_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": false,
+              "removed": true
+            },
+            {
+              "id": "updated_at",
+              "displayName": "updated_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": false,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        704,
+        240
+      ],
+      "id": "ba439cb0-3509-4fea-84be-8a8f9f6d1147",
+      "name": "Insert or update rows in a table",
+      "credentials": {
+        "postgres": {
+          "id": "i5abTWEaqeIGsYSi",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://pintail.api.rentmanager.com/Authentication/AuthorizeUser",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"Username\": \"{{ $env.RENTMANAGER_USERNAME }}\",\n  \"Password\": \"{{ $env.RENTMANAGER_PASSWORD }}\",\n  \"LocationID\": 1\n}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "text"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        480,
+        64
+      ],
+      "id": "7924c6b4-6cf9-4fcf-8634-a0f3a2394c95",
+      "name": "Get Token from RentManger"
+    },
+    {
+      "parameters": {
+        "inputSource": "passthrough"
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        -784,
+        240
+      ],
+      "id": "84ecfca6-73de-4efb-8f54-0205357ba3fe",
+      "name": "When Executed by Another Workflow"
+    },
+    {
+      "parameters": {
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "46423d76-cccd-4510-a4f7-740f3488458c",
+      "name": "Format Response",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        480,
+        256
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "97ba2925-c327-4a33-8861-22e5e9669b76",
+              "name": "=method",
+              "value": "={{ $json.method}}",
+              "type": "string"
+            },
+            {
+              "id": "82036aea-b6f3-46d7-8336-ac87cf460122",
+              "name": "resource",
+              "value": "={{ $json.resource }}",
+              "type": "string"
+            },
+            {
+              "id": "4e17ccf5-93fe-4600-a904-9e092a5fc0ce",
+              "name": "parameters",
+              "value": "={{ $json.parameters}}",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -608,
+        240
+      ],
+      "id": "f176a1c7-2f8d-4362-b3c1-ac46b8f9d0a2",
+      "name": "Edit Fields"
+    }
+  ],
+  "pinData": {
+    "When Executed by Another Workflow": [
+      {
+        "json": {
+          "method": "GET",
+          "resource": "ServiceManagerIssues",
+          "parameters": {
+            "filters": "IsClosed,eq,false",
+            "fields": "Title,Description"
+          }
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      }
+    ]
+  },
+  "connections": {
+    "Create Token Table": {
+      "main": [
+        [
+          {
+            "node": "Get RentManager API Token",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get RentManager API Token": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Token Expired?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Token Expired?": {
+      "main": [
+        [
+          {
+            "node": "Get Token from RentManger",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Format Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Token from RentManger": {
+      "main": [
+        [
+          {
+            "node": "Insert or update rows in a table",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Insert or update rows in a table": {
+      "main": [
+        [
+          {
+            "node": "Get RentManager API Token",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When Executed by Another Workflow": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Create Token Table",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": false
+  },
+  "versionId": "773c19ae-ef6f-41c0-8931-0d7264154968",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "a2d4123e10168ab72545181a6d5bb7e6a5222eb129a2ccd8b6d2ec49af3481af"
+  },
+  "id": "vv16lOoAb878BoKJeM4il",
+  "tags": []
+}
