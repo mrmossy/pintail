@@ -84,7 +84,7 @@ async function getConversationHistory(sessionId) {
 
 // Chat endpoint with SSE streaming
 app.post('/chat', async (req, res) => {
-  const message = req.body.message || req.body.text || req.body.input;
+  const message = req.body.message || req.body.text || req.body.input || req.body.chatInput;
   const { sessionId } = req.body;
 
   if (!message) {
