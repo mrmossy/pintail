@@ -1,4 +1,4 @@
-# Pintail Chat Backend
+# Chat Backend
 
 Express.js API for the Pintail Property Management chat service. Provides real-time streaming chat powered by OpenAI with conversation history persistence to PostgreSQL.
 
