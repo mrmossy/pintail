@@ -3,6 +3,15 @@
 
 set -e  # Exit on any error
 
+# Require explicit confirmation
+echo "⚠️  WARNING: This is a DEVELOPMENT-ONLY script!"
+echo "Are you sure you're running this in a development environment? (type 'dev' to continue)"
+read -r confirmation
+if [[ "$confirmation" != "dev" ]]; then
+    echo "Script execution cancelled."
+    exit 1
+fi
+
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$SCRIPT_DIR"
 
