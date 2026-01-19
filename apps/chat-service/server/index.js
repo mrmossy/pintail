@@ -1,4 +1,5 @@
 const express = require('express');
+const path = require('path');
 const cors = require('cors');
 const { pool, initDb } = require('./database/pool');
 const healthRouter = require('./routes/health');
@@ -13,14 +14,15 @@ app.use(cors({
 }));
 app.use(express.json());
 
+// Host the widget assets and test page from /widget
+app.use('/widget', express.static(path.join(__dirname, '..', 'widget')));
+
 // Make pool available to routes
 app.set('pool', pool);
 
 // Mount routes
 app.use('/health', healthRouter);
-app.use('/chat', chatRouter);
-app.use('/session', chatRouter);
-app.use('/history', chatRouter);
+app.use('/', chatRouter);
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, async () => {

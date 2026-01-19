@@ -35,7 +35,7 @@ async function getConversationHistory(pool, sessionId) {
 }
 
 // Chat endpoint with SSE streaming
-router.post('/', async (req, res) => {
+router.post('/chat', async (req, res) => {
   const message = req.body.message || req.body.text || req.body.input || req.body.chatInput;
   const { sessionId } = req.body;
 
