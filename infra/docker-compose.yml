@@ -91,11 +91,11 @@ services:
       - "traefik.http.services.budibase.loadbalancer.server.port=80"
 
   # ===================
-  # CHAT BACKEND - Express.js API
+  # CHAT SERVICE - Express.js API + Widget
   # ===================
-  chat-backend:
+  chat-service:
     build: 
-      context: ../apps/chat-backend
+      context: ../apps/chat-service
       dockerfile: Dockerfile
     pull_policy: always
     restart: unless-stopped
@@ -104,17 +104,17 @@ services:
     environment:
       - NODE_ENV=${NODE_ENV}
       - OPENAI_API_KEY=${OPENAI_API_KEY}
-      # Database connection for chat backend
+      # Database connection for chat service
       - POSTGRES_HOST=${POSTGRES_APP_HOST}
       - POSTGRES_PORT=${POSTGRES_APP_PORT}
       - POSTGRES_DB=${POSTGRES_APP_DB}
       - POSTGRES_USER=${POSTGRES_APP_USER}
       - POSTGRES_PASSWORD=${POSTGRES_APP_PASSWORD}
     volumes:
-      - ../apps/chat-backend/config:/app/config:ro
+      - ../apps/chat-service/config:/app/config:ro
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.chat.rule=Host(`${CHAT_BACKEND_HOSTNAME}`)"
+      - "traefik.http.routers.chat.rule=Host(`${CHAT_SERVICE_HOSTNAME}`)"
       - "traefik.http.routers.chat.entrypoints=websecure"
       - "traefik.http.routers.chat.tls.certresolver=letsencrypt"
       - "traefik.http.services.chat.loadbalancer.server.port=3000"

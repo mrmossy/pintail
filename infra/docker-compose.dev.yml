@@ -2,12 +2,16 @@ services:
   n8n:
     ports:
       - "5678:5678"
+    environment:
+      # Override SSL settings for development (no SSL)
+      - DB_POSTGRESDB_SSL_ENABLED=
+      - DB_POSTGRESDB_SSL_REJECT_UNAUTHORIZED=
 
   budibase:
     ports:
       - "8080:80"
 
-  chat-backend:
+  chat-service:
     ports:
       - "3000:3000"
 

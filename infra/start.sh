@@ -9,7 +9,7 @@ echo "Starting Pintail development services..."
 docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d
 
 echo "Services started! Access points:"
-echo "- Chat Backend: http://localhost:3000"
+echo "- Chat Service: http://localhost:3000"
 echo "- Budibase Dashboard: http://localhost:8080"
 echo "- N8N: http://localhost:5678"
 echo "- PostgreSQL: localhost:5432"
