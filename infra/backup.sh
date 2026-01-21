@@ -49,12 +49,24 @@ find $BACKUP_DIR -type f -mtime +$RETENTION_DAYS -delete
 # 7. Clean Up Old S3 Backups
 # ===================
 echo "Cleaning up old S3 backups..."
-# List and delete files older than retention period
-aws s3 ls $S3_BUCKET/ | while read -r line; do
-    file_date=$(echo $line | awk '{print $1}')
+# Calculate cutoff date in seconds
+CUTOFF_DATE=$(date -d "-$RETENTION_DAYS days" +%s)
+
+# Clean up n8n backups
+aws s3 ls $S3_BUCKET/n8n/ | grep '\.tar\.gz$' | while read -r line; do
+    file_date=$(echo $line | awk '{print $1 " " $2}')
     file_name=$(echo $line | awk '{print $4}')
-    if [[ $(date -d "$file_date" +%s) -lt $(date -d "-$RETENTION_DAYS days" +%s) ]]; then
-        aws s3 rm "$S3_BUCKET/$file_name"
+    if [[ $(date -d "$file_date" +%s) -lt $CUTOFF_DATE ]]; then
+        aws s3 rm "$S3_BUCKET/n8n/$file_name"
+    fi
+done
+
+# Clean up Budibase backups
+aws s3 ls $S3_BUCKET/budibase/ | grep '\.tar\.gz$' | while read -r line; do
+    file_date=$(echo $line | awk '{print $1 " " $2}')
+    file_name=$(echo $line | awk '{print $4}')
+    if [[ $(date -d "$file_date" +%s) -lt $CUTOFF_DATE ]]; then
+        aws s3 rm "$S3_BUCKET/budibase/$file_name"
     fi
 done
 
