@@ -7,7 +7,7 @@ DATE=$(date +%Y-%m-%d_%H-%M-%S)
 RETENTION_DAYS=7
 
 # Load environment variables
-source /home/ubuntu/pintail/.env
+source /home/ubuntu/pintail/infra/.env
 
 echo "Starting backup: $DATE"
 
@@ -19,7 +19,7 @@ mkdir -p $BACKUP_DIR
 # ===================
 echo "Backing up n8n data..."
 docker run --rm \
-    -v pintail_n8n-data:/data \
+    -v n8n-data:/data \
     -v $BACKUP_DIR:/backup \
     alpine tar czf /backup/n8n-data_$DATE.tar.gz -C /data .
 
@@ -28,7 +28,7 @@ docker run --rm \
 # ===================
 echo "Backing up Budibase data..."
 docker run --rm \
-    -v pintail_budibase-data:/data \
+    -v budibase-data:/data \
     -v $BACKUP_DIR:/backup \
     alpine tar czf /backup/budibase-data_$DATE.tar.gz -C /data .
 
